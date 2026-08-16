@@ -1,0 +1,337 @@
+/* ฟอนต์โหลดจากในโปรเจกต์เอง เพื่อให้เดโม่ทำงานได้แม้อินเทอร์เน็ตล่ม */
+@import './assets/fonts/fonts.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════════
+   TURBO TRUST — base layer
+   ═══════════════════════════════════════════════════════════════ */
+@layer base {
+  :root {
+    --tt-magenta: #ec3f8c;
+    --tt-magenta-btn: #de1a73;
+    --tt-navy: #16307a;
+    --tt-navy-ink: #0e1f52;
+    --tt-mist: #f4f6fb;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply font-sans bg-navy-800 text-navy-700 antialiased;
+    /* ตัวเลขไม่กระโดดเวลานับเวลาถอยหลัง/นับขึ้น */
+    font-variant-numeric: tabular-nums;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display text-navy-500;
+    letter-spacing: -0.01em;
+  }
+
+  /* Focus ring ที่มองเห็นชัดสำหรับคีย์บอร์ด (ไม่โผล่ตอนคลิกเมาส์) */
+  :focus-visible {
+    outline: 3px solid var(--tt-magenta);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  button,
+  a,
+  [role='button'] {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ซ่อน scrollbar ภายในเฟรมมือถือ แต่ยังเลื่อนได้ */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Components
+   ═══════════════════════════════════════════════════════════════ */
+@layer components {
+  /* ตัวเลข/ราคา — ใช้ face แบบ display เพื่อให้ตัวเลขดูเป็นเครื่องยนต์ */
+  .num {
+    @apply font-display;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  /* การ์ดมาตรฐานของแอป */
+  .tt-card {
+    @apply rounded-card bg-white shadow-card;
+  }
+
+  /* ── SPEED MARK ────────────────────────────────────────────────
+     "ขีดความเร็ว" จากโลโก้ — ใช้เป็นอุปกรณ์โครงสร้างของทั้งแอป
+     (ตัวบอกขั้นตอน, แท็บที่ถูกเลือก, eyebrow ของหัวข้อ)             */
+  .speed-mark {
+    @apply inline-flex items-center gap-[3px];
+  }
+  .speed-mark i {
+    display: block;
+    width: 4px;
+    height: 12px;
+    transform: skewX(-18deg);
+    border-radius: 1px;
+    background: currentColor;
+  }
+  .speed-mark i:nth-child(1) {
+    opacity: 0.3;
+    width: 3px;
+  }
+  .speed-mark i:nth-child(2) {
+    opacity: 0.6;
+  }
+
+  /* แถบแสงวิ่งบนการ์ดตอนความคุ้มครองเปิดอยู่ */
+  .streak-layer {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    border-radius: inherit;
+  }
+  .streak-layer::after {
+    content: '';
+    position: absolute;
+    top: -20%;
+    bottom: -20%;
+    width: 34%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.42),
+      transparent
+    );
+    animation: streak 2.6s cubic-bezier(0.5, 0, 0.3, 1) infinite;
+  }
+
+  /* พื้นหลังเวทีเดโม่บนเดสก์ท็อป — ลายเส้นความเร็วจาง ๆ */
+  .stage-bg {
+    background:
+      radial-gradient(120% 90% at 82% 6%, rgba(236, 63, 140, 0.28) 0%, transparent 55%),
+      radial-gradient(90% 80% at 8% 96%, rgba(62, 92, 172, 0.4) 0%, transparent 55%),
+      linear-gradient(158deg, #0e1f52 0%, #0a1740 100%);
+  }
+  .stage-lines {
+    background-image: repeating-linear-gradient(
+      -18deg,
+      rgba(255, 255, 255, 0.05) 0px,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 1px,
+      transparent 13px
+    );
+  }
+
+  /* ── พื้นที่ปลอดภัยของมือถือจริง (notch / แถบเลื่อนล่าง) ──────
+     บนเดสก์ท็อปเราจำลองเป็นเฟรมมือถือ จึงใช้ค่าคงที่แทน            */
+  .app-header {
+    padding-top: calc(14px + env(safe-area-inset-top, 0px));
+  }
+  .app-footer {
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+  .app-safe-top {
+    padding-top: calc(20px + env(safe-area-inset-top, 0px));
+  }
+  @media (min-width: 1024px) {
+    .app-header {
+      padding-top: 34px;
+    }
+    .app-footer {
+      padding-bottom: 20px;
+    }
+    .app-safe-top {
+      padding-top: 52px;
+    }
+  }
+
+  /* ── ตัวเลื่อน (range) ────────────────────────────────────────
+     รางเติมสีชมพูตามค่า --pct ที่ส่งมาจาก React                  */
+  .tt-range {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+  }
+  .tt-range::-webkit-slider-runnable-track {
+    height: 8px;
+    border-radius: 999px;
+    background: linear-gradient(
+      90deg,
+      var(--tt-magenta) 0%,
+      var(--tt-magenta) var(--pct, 50%),
+      #e8ecf6 var(--pct, 50%),
+      #e8ecf6 100%
+    );
+  }
+  .tt-range::-moz-range-track {
+    height: 8px;
+    border-radius: 999px;
+    background: linear-gradient(
+      90deg,
+      var(--tt-magenta) 0%,
+      var(--tt-magenta) var(--pct, 50%),
+      #e8ecf6 var(--pct, 50%),
+      #e8ecf6 100%
+    );
+  }
+  .tt-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 28px;
+    height: 28px;
+    margin-top: -10px;
+    border-radius: 999px;
+    background: #fff;
+    border: 3px solid var(--tt-magenta-btn);
+    box-shadow: 0 4px 12px -3px rgba(222, 26, 115, 0.55);
+    cursor: grab;
+  }
+  .tt-range::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: #fff;
+    border: 3px solid var(--tt-magenta-btn);
+    box-shadow: 0 4px 12px -3px rgba(222, 26, 115, 0.55);
+    cursor: grab;
+  }
+  .tt-range:active::-webkit-slider-thumb {
+    cursor: grabbing;
+  }
+
+  /* input มาตรฐาน — สูง 52px เพื่อให้กดง่ายบนมือถือ */
+  .tt-input {
+    @apply h-[52px] w-full rounded-2xl border-2 border-mist-200 bg-mist-50 px-4
+           text-[16px] font-medium text-navy-700 placeholder:text-navy-300
+           transition-colors duration-200;
+  }
+  .tt-input:focus {
+    @apply border-magenta-400 bg-white outline-none;
+  }
+  .tt-input:focus-visible {
+    outline: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Screen transitions (ใช้กับ router ภายในของแอป)
+   ═══════════════════════════════════════════════════════════════ */
+.screen-enter-forward {
+  animation: slide-in-right 0.3s cubic-bezier(0.22, 0.9, 0.28, 1) both;
+}
+.screen-enter-back {
+  animation: slide-in-left 0.3s cubic-bezier(0.22, 0.9, 0.28, 1) both;
+}
+.screen-exit-forward {
+  animation: exit-left 0.3s cubic-bezier(0.22, 0.9, 0.28, 1) both;
+}
+.screen-exit-back {
+  animation: exit-right 0.3s cubic-bezier(0.22, 0.9, 0.28, 1) both;
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes exit-left {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-22px);
+    opacity: 0;
+  }
+}
+@keyframes exit-right {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(22px);
+    opacity: 0;
+  }
+}
+
+/* จังหวะเข้าแบบไล่ลำดับของ element ในหน้า */
+.stagger > * {
+  animation: fade-up 0.5s cubic-bezier(0.22, 0.9, 0.28, 1) both;
+}
+.stagger > *:nth-child(1) {
+  animation-delay: 0.04s;
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 0.22s;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 0.28s;
+}
+.stagger > *:nth-child(6) {
+  animation-delay: 0.34s;
+}
+.stagger > *:nth-child(7) {
+  animation-delay: 0.4s;
+}
+
+@keyframes fade-up {
+  from {
+    transform: translateY(14px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   เคารพการตั้งค่า "ลดการเคลื่อนไหว" ของผู้ใช้
+   ═══════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .streak-layer::after {
+    display: none;
+  }
+}
